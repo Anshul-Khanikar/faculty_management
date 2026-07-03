@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Faculty Database{% endblock %}
+
+{% block content %}
+<style>
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    /* Stats Summary Grid */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        text-align: center;
+    }
+
+    .stat-card h3 {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #818cf8;
+    }
+
+    /* Layout structure for Admin panel */
+    .admin-layout {
+        display: grid;
+        grid-template-columns: 1.7fr 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+        .admin-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .section-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-card h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--card-border);
+        padding-bottom: 0.5rem;
+    }
+
+    /* Data Table Styling */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    th, td {
+        padding: 0.65rem 0.85rem;
+        border-bottom: 1px solid var(--card-border);
+        font-size: 0.85rem;
+    }
+
+    th {
+        color: var(--text-secondary);
+        font-weight: 600;
+        background-color: rgba(11, 15, 25, 0.4);
+    }
+
+    tr:hover {
+        background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Profile View for Teachers */
+    .profile-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.75rem;
+        max-width: 600px;
+        margin: 2rem auto;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-header {
+        background-color: rgba(79, 70, 229, 0.08);
+        border-bottom: 1px solid var(--card-border);
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .profile-avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background-color: var(--accent-primary);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 auto 1rem;
+    }
+
+    .profile-header h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .profile-header p {
+        color: #818cf8;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .profile-body {
+        padding: 1.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    @media (max-width: 500px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .info-item h4 {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        margin-bottom: 0.2rem;
+    }
+
+    .info-item p {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    /* Modal Backdrop */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        backdrop-filter: blur(3px);
+    }
+
+    .modal-content {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 550px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--card-border);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .modal-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .close-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .close-btn:hover {
+        color: var(--text-primary);
+    }
+</style>
+
+<div class="dashboard-header">
+    <div>
+        <h1 style="font-size: 1.5rem;">Faculty <span>Database</span></h1>
+        <p style="font-size: 0.8rem; color: var(--text-secondary);">Role: <strong>{{ role.capitalize() }}</strong></p>
+    </div>
+    <a href="{{ url_for('logout') }}" class="nav-btn">Log Out</a>
+</div>
+
+{% if role == 'admin' %}
+    <!-- STATS SUMMARY -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <h3>Registered Faculty</h3>
+            <div class="value">{{ teachers|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h3>Database Status</h3>
+            <div class="value" style="color: var(--success-color);">SQLite Connected</div>
+        </div>
+    </div>
+
+    <div class="admin-layout">
+        <!-- TEACHERS TABLE (LEFT SIDE) -->
+        <div>
+            <div class="section-card">
+                <h2>Faculty Directory</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Designation</th>
+                                <th>Phone</th>
+                                <th>Class</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if teachers %}
+                                {% for t in teachers %}
+                                    <tr>
+                                        <td><strong>{{ t.id }}</strong></td>
+                                        <td>{{ t.name }}</td>
+                                        <td><span style="color: #818cf8;">{{ t.designation }}</span></td>
+                                        <td>{{ t.phone_no }}</td>
+                                        <td>Class {{ t.class }}</td>
+                                        <td>
+                                            <div style="display: flex; gap: 0.5rem;">
+                                                <button class="btn btn-sm btn-secondary" onclick="openEditModal({{ t.id }}, '{{ t.name }}', '{{ t.designation }}', '{{ t.phone_no }}', {{ t.salary }}, {{ t.class }}, '{{ t.address }}', '{{ t.pancard_no }}', '{{ t.aadhar_no }}', '{{ t.password }}')">Edit</button>
+                                                <a href="{{ url_for('delete_teacher', teacher_id=t.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this teacher record?');">Delete</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 2rem;">No teacher records found. Register a teacher using the form!</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTROL PANEL (RIGHT SIDE) -->
+        <div>
+            <!-- ADD TEACHER FORM -->
+            <div class="section-card">
+                <h2>Add Teacher</h2>
+                <form action="{{ url_for('add_teacher') }}" method="POST">
+                    <label for="name">Full Name</label>
+                    <input type="text" name="name" id="name" placeholder="John Doe" required>
+                    
+                    <label for="designation">Designation</label>
+                    <input type="text" name="designation" id="designation" placeholder="Assistant Professor" required>
+                    
+                    <div class="form-grid">
+                        <div>
+                            <label for="phone_no">Phone Number</label>
+                            <input type="text" name="phone_no" id="phone_no" placeholder="9876543210" required>
+                        </div>
+                        <div>
+                            <label for="salary">Salary (Monthly)</label>
+                            <input type="number" name="salary" id="salary" placeholder="50000" step="any" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div>
+                            <label for="class">Class</label>
+                            <input type="number" name="class" id="class" placeholder="10" required>
+                        </div>
+                        <div>
+                            <label for="password">Password</label>
+                            <input type="text" name="password" id="password" placeholder="Pass123" required>
+                        </div>
+                    </div>
+                    
+                    <label for="address">Address</label>
+                    <input type="text" name="address" id="address" placeholder="123 Main St, State" required>
+                    
+                    <div class="form-grid">
+                        <div>
+                            <label for="pancard_no">PAN Card No.</label>
+                            <input type="text" name="pancard_no" id="pancard_no" placeholder="ABCDE1234F" required>
+                        </div>
+                        <div>
+                            <label for="aadhar_no">Aadhaar No.</label>
+                            <input type="text" name="aadhar_no" id="aadhar_no" placeholder="12-digit Aadhar" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn" style="width: 100%; margin-top: 0.5rem;">Register Teacher</button>
+                </form>
+            </div>
+
+            <!-- ADMIN PASSWORD UPDATE -->
+            <div class="section-card">
+                <h2>Admin Settings</h2>
+                <form action="{{ url_for('change_admin_password') }}" method="POST">
+                    <label for="new_password">Admin Portal Password</label>
+                    <input type="text" name="new_password" id="new_password" value="{{ admin_pass }}" required>
+                    <button type="submit" class="btn btn-secondary" style="width: 100%;">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT TEACHER MODAL -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Edit Teacher (ID: <span id="editIdDisplay"></span>)</span>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editForm" method="POST">
+                <label for="edit_name">Full Name</label>
+                <input type="text" name="name" id="edit_name" required>
+                
+                <label for="edit_designation">Designation</label>
+                <input type="text" name="designation" id="edit_designation" required>
+                
+                <div class="form-grid">
+                    <div>
+                        <label for="edit_phone_no">Phone Number</label>
+                        <input type="text" name="phone_no" id="edit_phone_no" required>
+                    </div>
+                    <div>
+                        <label for="edit_salary">Salary</label>
+                        <input type="number" name="salary" id="edit_salary" step="any" required>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div>
+                        <label for="edit_class">Class</label>
+                        <input type="number" name="class" id="edit_class" required>
+                    </div>
+                    <div>
+                        <label for="edit_password">Password</label>
+                        <input type="text" name="password" id="edit_password" required>
+                    </div>
+                </div>
+                
+                <label for="edit_address">Address</label>
+                <input type="text" name="address" id="edit_address" required>
+                
+                <div class="form-grid">
+                    <div>
+                        <label for="edit_pancard_no">PAN Card No.</label>
+                        <input type="text" name="pancard_no" id="edit_pancard_no" required>
+                    </div>
+                    <div>
+                        <label for="edit_aadhar_no">Aadhaar No.</label>
+                        <input type="text" name="aadhar_no" id="edit_aadhar_no" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openEditModal(id, name, designation, phone, salary, class_assigned, address, pan, aadhar, password) {
+            document.getElementById('editIdDisplay').innerText = id;
+            document.getElementById('editForm').action = "/update/" + id;
+            
+            document.getElementById('edit_name').value = name;
+            document.getElementById('edit_designation').value = designation;
+            document.getElementById('edit_phone_no').value = phone;
+            document.getElementById('edit_salary').value = salary;
+            document.getElementById('edit_class').value = class_assigned;
+            document.getElementById('edit_address').value = address;
+            document.getElementById('edit_pancard_no').value = pan;
+            document.getElementById('edit_aadhar_no').value = aadhar;
+            document.getElementById('edit_password').value = password;
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target == modal) {
+                closeEditModal();
+            }
+        }
+    </script>
+
+{% else %}
+    <!-- TEACHER VIEW (PROFILE CARD) -->
+    {% if teacher %}
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    {{ teacher.name[0].upper() }}
+                </div>
+                <h2>{{ teacher.name }}</h2>
+                <p>{{ teacher.designation }}</p>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">System ID: {{ teacher.id }}</div>
+            </div>
+            <div class="profile-body">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4>Phone Number</h4>
+                        <p>{{ teacher.phone_no }}</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Assigned Class Room</h4>
+                        <p>Class {{ teacher.class }}</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Monthly Salary</h4>
+                        <p>${{ teacher.salary }}</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Aadhaar Number</h4>
+                        <p>{{ teacher.aadhar_no }}</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>PAN Card Number</h4>
+                        <p>{{ teacher.pancard_no }}</p>
+                    </div>
+                    <div class="info-item">
+                        <h4>Login Password</h4>
+                        <p>{{ teacher.password }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item" style="margin-top: 1.5rem; border-top: 1px solid var(--card-border); padding-top: 1rem;">
+                    <h4>Address</h4>
+                    <p>{{ teacher.address }}</p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="stat-card" style="margin-top: 2rem;">
+            <p>Error: Could not retrieve your profile. Please contact the administrator.</p>
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In - Faculty Database{% endblock %}
+
+{% block content %}
+<style>
+    .login-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 8rem);
+    }
+
+    .login-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 0.75rem;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    .login-card h2 {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+
+    .login-card p {
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 2rem;
+    }
+
+    .role-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        background-color: rgba(11, 15, 25, 0.5);
+        padding: 0.25rem;
+        border-radius: 0.375rem;
+        border: 1px solid var(--card-border);
+    }
+
+    .role-tab-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .role-tab-btn.active {
+        background-color: var(--accent-primary);
+        color: white;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <h2>Faculty Database</h2>
+        <p>Sign in to manage or view records</p>
+        
+        <form action="{{ url_for('login') }}" method="POST">
+            <!-- Hidden role input that changes with the tabs -->
+            <input type="hidden" name="role" id="roleInput" value="admin">
+            
+            <div class="role-tabs">
+                <button type="button" class="role-tab-btn active" id="tabAdmin" onclick="setRole('admin')">Admin</button>
+                <button type="button" class="role-tab-btn" id="tabTeacher" onclick="setRole('teacher')">Teacher</button>
+            </div>
+            
+            <div class="form-group">
+                <label for="username" id="usernameLabel">Admin Username</label>
+                <input type="text" name="username" id="username" placeholder="e.g. admin" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" placeholder="••••••••" required>
+            </div>
+            
+            <button type="submit" class="btn" style="margin-top: 1rem; width: 100%;">Sign In</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function setRole(role) {
+        document.getElementById('roleInput').value = role;
+        
+        const tabAdmin = document.getElementById('tabAdmin');
+        const tabTeacher = document.getElementById('tabTeacher');
+        const usernameLabel = document.getElementById('usernameLabel');
+        const usernameInput = document.getElementById('username');
+        
+        if (role === 'admin') {
+            tabAdmin.classList.add('active');
+            tabTeacher.classList.remove('active');
+            usernameLabel.innerText = "Admin Username";
+            usernameInput.placeholder = "e.g. admin";
+            usernameInput.value = "admin"; // Prefill for helper
+        } else {
+            tabTeacher.classList.add('active');
+            tabAdmin.classList.remove('active');
+            usernameLabel.innerText = "Teacher ID";
+            usernameInput.placeholder = "e.g. 1";
+            usernameInput.value = "";
+        }
+    }
+</script>
+{% endblock %}
